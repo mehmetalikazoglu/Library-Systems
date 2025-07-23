@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Kitap Ödünç Alma</h3>
+<form method="POST">
+    <label>Kullanıcı:</label>
+    <select name="kullanici_id" class="form-control mb-2">
+        {% for k in kullanicilar %}
+        <option value="{{ k.id }}">{{ k.ad }} {{ k.soyad }}</option>
+        {% endfor %}
+    </select>
+    <label>Kitap:</label>
+    <select name="kitap_id" class="form-control mb-2">
+        {% for kitap in kitaplar %}
+        <option value="{{ kitap.id }}">{{ kitap.ad }}</option>
+        {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-success">Ödünç Ver</button>
+</form>
+{% endblock %}

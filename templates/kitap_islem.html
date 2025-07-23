@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Kitap Ekle/Sil/Güncelle</h3>
+<form method="POST" class="mb-3">
+    <input type="text" name="ad" class="form-control mb-2" placeholder="Kitap Adı">
+    <input type="text" name="yazar" class="form-control mb-2" placeholder="Yazar">
+    <input type="number" name="baski_yili" class="form-control mb-2" placeholder="Baskı Yılı">
+    <button name="ekle" class="btn btn-success">Ekle</button>
+</form>
+
+<form method="POST" class="mb-3">
+    <input type="number" name="kitap_id" class="form-control mb-2" placeholder="Silinecek Kitap ID">
+    <button name="sil" class="btn btn-danger">Sil</button>
+</form>
+
+<form method="POST">
+    <input type="number" name="kitap_id" class="form-control mb-2" placeholder="Güncellenecek Kitap ID">
+    <input type="text" name="yeni_ad" class="form-control mb-2" placeholder="Yeni Kitap Adı">
+    <button name="guncelle" class="btn btn-warning">Güncelle</button>
+</form>
+
+<hr>
+<h4>Kitap Listesi</h4>
+<ul>
+    {% for kitap in kitaplar %}
+    <li>{{ kitap.id }} - {{ kitap.ad }} ({{ kitap.yazar }})</li>
+    {% endfor %}
+</ul>
+{% endblock %}

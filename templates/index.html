@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Mevcut Kitaplar</h3>
+<table class="table table-striped">
+    <tr><th>Ad</th><th>Yazar</th><th>Baskı Yılı</th><th>Durum</th></tr>
+    {% for kitap in kitaplar %}
+    <tr>
+        <td>{{ kitap.ad }}</td>
+        <td>{{ kitap.yazar }}</td>
+        <td>{{ kitap.baski_yili }}</td>
+        <td>{% if kitap.mevcut %}📗 Mevcut{% else %}❌ Ödünçte{% endif %}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}
