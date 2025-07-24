@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Kitap Ödünç Al</h3>
+<form method="POST" class="row g-3">
+    <div class="col-md-10">
+        <select name="kitap_id" class="form-select" required>
+            {% for kitap in kitaplar %}
+                <option value="{{ kitap.id }}">{{ kitap.ad }} - {{ kitap.yazar }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-2">
+        <button name="al" class="btn btn-success w-100">Ödünç Al</button>
+    </div>
+</form>
+
+<hr>
+
+<h3>Ödünç Alınan Kitaplar</h3>
+<form method="POST" class="row g-3">
+    <div class="col-md-10">
+        <select name="odunc_id" class="form-select" required>
+            {% for odunc in oduncler %}
+                <option value="{{ odunc.odunc_id }}">{{ odunc.kitap_ad }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-2">
+        <button name="teslim" class="btn btn-warning w-100">Geri Ver</button>
+    </div>
+</form>
+{% endblock %}

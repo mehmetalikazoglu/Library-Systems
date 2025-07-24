@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Giriş Yap</h3>
+<form method="POST" class="mt-3">
+    <div class="mb-3">
+        <label>Email:</label>
+        <input type="email" name="email" class="form-control" required>
+    </div>
+    <div class="mb-3">
+        <label>Şifre:</label>
+        <input type="password" name="sifre" class="form-control" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Giriş Yap</button>
+    <p>Hesabınız yok mu? <a href="{{ url_for('register') }}">Kayıt ol</a></p>
+</form>
+{% endblock %}

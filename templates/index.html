@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="text-center">
+    <h2>Kütüphane Sistemine Hoşgeldiniz</h2>
+    <p>Mevcut kitapları aşağıda görebilirsiniz.</p>
+</div>
+
+<table class="table table-striped mt-4">
+    <thead>
+        <tr>
+            <th>Kitap Adı</th>
+            <th>Yazar</th>
+            <th>Baskı Yılı</th>
+            <th>Durum</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for kitap in kitaplar %}
+        <tr>
+            <td>{{ kitap.ad }}</td>
+            <td>{{ kitap.yazar }}</td>
+            <td>{{ kitap.baski_yili }}</td>
+            <td>
+                {% if kitap.mevcut %}
+                    <span class="badge bg-success">Mevcut</span>
+                {% else %}
+                    <span class="badge bg-danger">Ödünçte</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

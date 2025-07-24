@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Kitap Ekle</h3>
+<form method="POST" class="row g-3">
+    <div class="col-md-4">
+        <input type="text" name="ad" placeholder="Kitap Adı" class="form-control" required>
+    </div>
+    <div class="col-md-4">
+        <input type="text" name="yazar" placeholder="Yazar" class="form-control" required>
+    </div>
+    <div class="col-md-3">
+        <input type="number" name="baski_yili" placeholder="Baskı Yılı" class="form-control" required>
+    </div>
+    <div class="col-md-1">
+        <button name="ekle" class="btn btn-success w-100">Ekle</button>
+    </div>
+</form>
+
+<hr>
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+<h3>Kitap Sil</h3>
+<form method="POST" class="row g-3">
+    <div class="col-md-11">
+        <select name="sil_kitap_id" class="form-select select2" required>
+            <option value="">Silinecek kitabı seçin</option>
+            {% for kitap in kitaplar %}
+                <option value="{{ kitap.id }}">{{ kitap.ad }} - {{ kitap.yazar }} ({{ kitap.baski_yili }})</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-1">
+        <button name="sil" class="btn btn-danger w-100">Sil</button>
+    </div>
+</form>
+
+<!-- Select2 JS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        $('.select2').select2({
+            placeholder: "Silmek istediğiniz kitabı seçin...",
+            width: '100%'
+        });
+    });
+</script>
+
+
+<hr>
+
+<h3>Kitap Güncelle</h3>
+<form method="POST" class="row g-3">
+    <div class="col-md-5">
+        <select name="guncelle_kitap_id" class="form-control select2" required>
+            <option></option>
+            {% for kitap in kitaplar %}
+                <option value="{{ kitap.id }}">{{ kitap.ad }} - {{ kitap.yazar }} ({{ kitap.baski_yili }})</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-3">
+        <input type="text" name="yeni_ad" placeholder="Yeni Ad" class="form-control" required>
+    </div>
+    <div class="col-md-2">
+        <input type="text" name="yeni_yazar" placeholder="Yeni Yazar" class="form-control" required>
+    </div>
+    <div class="col-md-2">
+        <input type="number" name="yeni_yil" placeholder="Yeni Baskı Yılı" class="form-control" required>
+    </div>
+    <div class="col-md-12 mt-2">
+        <button name="guncelle" class="btn btn-warning w-100">Güncelle</button>
+    </div>
+</form>
+
+<hr>
+<h4>Kitaplar</h4>
+<ul class="list-group">
+    {% for kitap in kitaplar %}
+        <li class="list-group-item">{{ kitap.ad }} - {{ kitap.yazar }} ({{ kitap.baski_yili }})</li>
+    {% endfor %}
+</ul>
+{% endblock %}
