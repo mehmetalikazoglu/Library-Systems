@@ -20,12 +20,11 @@
 
 <h4>Şifre Değiştir</h4>
 <form method="POST">
-    <div class="mb-3">
-        <label>Yeni Şifre:</label>
-        <input type="password" name="yeni_sifre" class="form-control" required>
-    </div>
-    <button name="sifre" class="btn btn-info">Şifre Güncelle</button>
+    <input type="password" name="mevcut_sifre" class="form-control mb-2" placeholder="Mevcut Şifre" required>
+    <input type="password" name="yeni_sifre" class="form-control mb-2" placeholder="Yeni Şifre" required>
+    <button type="submit" name="sifre" class="btn btn-warning w-100">Şifreyi Güncelle</button>
 </form>
+
 
 <hr>
 

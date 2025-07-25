@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 import mysql.connector
+from werkzeug.security import check_password_hash, generate_password_hash
 
 app = Flask(__name__)
 app.secret_key = 'gizli_anahtar'
@@ -37,10 +38,11 @@ def register():
         ad = request.form['ad']
         soyad = request.form['soyad']
         email = request.form['email']
-        sifre = generate_password_hash(request.form['sifre'])
-        cursor.execute("INSERT INTO kullanicilar (ad, soyad, email, sifre) VALUES (%s, %s, %s, %s)",
-                       (ad, soyad, email, sifre))
+        hash_sifreleme = generate_password_hash(form['sifre'])
+        cursor.execute("INSERT INTO kullanicilar (ad, email, sifre) VALUES (%s, %s, %s)",
+                    (form['ad'], form['email'], hash_sifreleme))
         db.commit()
+
         flash("Kayıt başarılı. Giriş yapabilirsiniz.", "success")
         return redirect(url_for('login'))
     return render_template("register.html")
@@ -138,6 +140,7 @@ def odunc():
 
     return render_template("odunc.html", kitaplar=kitaplar, oduncler=oduncler)
 
+
 @app.route('/hesabim', methods=["GET", "POST"])
 @login_required
 def hesabim():
@@ -150,20 +153,34 @@ def hesabim():
             db.commit()
             session['user_ad'] = ad
             flash("Bilgiler güncellendi.", "success")
+
         elif 'sifre' in request.form:
-            yeni = generate_password_hash(request.form['yeni_sifre'])
-            cursor.execute("UPDATE kullanicilar SET sifre = %s WHERE id = %s", (yeni, session['user_id']))
-            db.commit()
-            flash("Şifre güncellendi.", "info")
+            mevcut_sifre = request.form['mevcut_sifre']
+            yeni_sifre = request.form['yeni_sifre']
+
+            # Kullanıcının hash'li şifresini veritabanından al
+            cursor.execute("SELECT sifre FROM kullanicilar WHERE id = %s", (session['user_id'],))
+            user = cursor.fetchone()
+
+            if user and check_password_hash(user['sifre'], mevcut_sifre):
+                yeni_hash = generate_password_hash(yeni_sifre)
+                cursor.execute("UPDATE kullanicilar SET sifre = %s WHERE id = %s", (yeni_hash, session['user_id']))
+                db.commit()
+                flash("Şifre başarıyla değiştirildi.", "info")
+            else:
+                flash("Mevcut şifre yanlış!", "danger")
+
         elif 'sil' in request.form:
             cursor.execute("DELETE FROM kullanicilar WHERE id = %s", (session['user_id'],))
             db.commit()
             session.clear()
             flash("Hesabınız silindi.", "danger")
             return redirect(url_for('index'))
+
     cursor.execute("SELECT * FROM kullanicilar WHERE id = %s", (session['user_id'],))
     user = cursor.fetchone()
     return render_template("hesabim.html", user=user)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
