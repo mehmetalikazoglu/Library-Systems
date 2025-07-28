@@ -2,6 +2,8 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from werkzeug.security import generate_password_hash, check_password_hash
 import mysql.connector
 from werkzeug.security import check_password_hash, generate_password_hash
+import os
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.secret_key = 'gizli_anahtar'
@@ -69,6 +71,15 @@ def logout():
     flash("Çıkış yapıldı.", "info")
     return redirect(url_for('index'))
 
+
+
+UPLOAD_FOLDER = 'static/resimler'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 @app.route('/kitap_islem', methods=["GET", "POST"])
 @login_required
 def kitap_islem():
@@ -77,8 +88,16 @@ def kitap_islem():
             ad = request.form['ad']
             yazar = request.form['yazar']
             baski_yili = request.form['baski_yili']
-            cursor.execute("INSERT INTO kitaplar (ad, yazar, baski_yili) VALUES (%s, %s, %s)",
-                           (ad, yazar, baski_yili))
+
+            resim_dosyasi = request.files.get('resim')
+            dosya_adi = None
+            if resim_dosyasi and allowed_file(resim_dosyasi.filename):
+                dosya_adi = secure_filename(resim_dosyasi.filename)
+                save_path = os.path.join(app.config['UPLOAD_FOLDER'], dosya_adi)
+                resim_dosyasi.save(save_path)
+
+            cursor.execute("INSERT INTO kitaplar (ad, yazar, baski_yili, resim) VALUES (%s, %s, %s, %s)",
+                           (ad, yazar, baski_yili, dosya_adi))
             db.commit()
             flash("Kitap eklendi.", "success")
 
@@ -108,10 +127,10 @@ def kitap_islem():
             db.commit()
             flash("Kitap bilgileri güncellendi.", "info")
 
-
     cursor.execute("SELECT * FROM kitaplar")
     kitaplar = cursor.fetchall()
     return render_template("kitap_islem.html", kitaplar=kitaplar)
+
 
 
 @app.route('/odunc', methods=["GET", "POST"])

@@ -8,6 +8,7 @@
 <table class="table table-striped mt-4">
     <thead>
         <tr>
+            <th>Görsel</th>
             <th>Kitap Adı</th>
             <th>Yazar</th>
             <th>Baskı Yılı</th>
@@ -17,6 +18,13 @@
     <tbody>
         {% for kitap in kitaplar %}
         <tr>
+            <td style="width: 100px;">
+                {% if kitap.resim %}
+                    <img src="{{ url_for('static', filename='resimler/' + kitap.resim) }}" alt="Kitap Resmi" style="max-width: 80px; height: auto;">
+                {% else %}
+                    <img src="{{ url_for('static', filename='resimler/default.jpeg') }}" alt="Varsayılan Resim" style="max-width: 80px; height: auto;">
+                {% endif %}
+            </td>
             <td>{{ kitap.ad }}</td>
             <td>{{ kitap.yazar }}</td>
             <td>{{ kitap.baski_yili }}</td>
@@ -31,4 +39,5 @@
         {% endfor %}
     </tbody>
 </table>
+
 {% endblock %}

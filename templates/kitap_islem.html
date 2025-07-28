@@ -1,15 +1,18 @@
 {% extends "base.html" %}
 {% block content %}
 <h3>Kitap Ekle</h3>
-<form method="POST" class="row g-3">
-    <div class="col-md-4">
+<form method="POST" class="row g-3" enctype="multipart/form-data">
+    <div class="col-md-3">
         <input type="text" name="ad" placeholder="Kitap Adı" class="form-control" required>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
         <input type="text" name="yazar" placeholder="Yazar" class="form-control" required>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
         <input type="number" name="baski_yili" placeholder="Baskı Yılı" class="form-control" required>
+    </div>
+    <div class="col-md-3">
+        <input type="file" name="resim" accept="image/*" class="form-control">
     </div>
     <div class="col-md-1">
         <button name="ekle" class="btn btn-success w-100">Ekle</button>
