@@ -55,10 +55,10 @@
 <hr>
 
 <h3>Kitap Güncelle</h3>
-<form method="POST" class="row g-3">
+<form method="POST" class="row g-3" enctype="multipart/form-data">
     <div class="col-md-5">
         <select name="guncelle_kitap_id" class="form-control select2" required>
-            <option></option>
+            <option value="">Güncellemek istediğiniz kitabı seçin </option>
             {% for kitap in kitaplar %}
                 <option value="{{ kitap.id }}">{{ kitap.ad }} - {{ kitap.yazar }} ({{ kitap.baski_yili }})</option>
             {% endfor %}
@@ -72,6 +72,9 @@
     </div>
     <div class="col-md-2">
         <input type="number" name="yeni_yil" placeholder="Yeni Baskı Yılı" class="form-control" required>
+    </div>
+    <div class="col-md-6">
+        <input type="file" name="yeni_resim" accept="image/*" class="form-control">
     </div>
     <div class="col-md-12 mt-2">
         <button name="guncelle" class="btn btn-warning w-100">Güncelle</button>

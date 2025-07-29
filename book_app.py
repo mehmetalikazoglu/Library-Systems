@@ -88,7 +88,6 @@ def kitap_islem():
             ad = request.form['ad']
             yazar = request.form['yazar']
             baski_yili = request.form['baski_yili']
-
             resim_dosyasi = request.files.get('resim')
             dosya_adi = None
             if resim_dosyasi and allowed_file(resim_dosyasi.filename):
@@ -119,13 +118,46 @@ def kitap_islem():
             yeni_ad = request.form['yeni_ad']
             yeni_yazar = request.form['yeni_yazar']
             yeni_yil = request.form['yeni_yil']
+            yeni_resim = request.files.get('yeni_resim')
 
+            # Önce kitap bilgilerini güncelle
             cursor.execute(
                 "UPDATE kitaplar SET ad = %s, yazar = %s, baski_yili = %s WHERE id = %s",
                 (yeni_ad, yeni_yazar, yeni_yil, kitap_id)
             )
-            db.commit()
-            flash("Kitap bilgileri güncellendi.", "info")
+
+            # Eğer yeni resim yüklendiyse:
+            if yeni_resim and yeni_resim.filename != '':
+                    # Veritabanından eski resmi al
+                    cursor.execute("SELECT resim FROM kitaplar WHERE id = %s", (kitap_id,))
+                    sonuc = cursor.fetchone()
+
+                    if sonuc and 'resim' in sonuc:
+                        eski_resim = sonuc['resim']  # dictionary=True ile bu şekilde alıyoruz
+
+                        if eski_resim and eski_resim != 'default.jpeg':
+                            eski_resim_yolu = os.path.join('static', 'resimler', eski_resim)
+                            if os.path.exists(eski_resim_yolu):
+                                os.remove(eski_resim_yolu)
+
+                    else:
+                        flash("Kitap bulunamadı veya resim bilgisi eksik.", "warning")
+                        return redirect("/")
+
+                    # Yeni resmi kaydet
+                    dosya_adi = str(uuid.uuid4()) + os.path.splitext(yeni_resim.filename)[1]
+                    kayit_yolu = os.path.join('static', 'resimler', dosya_adi)
+                    yeni_resim.save(kayit_yolu)
+
+                    # Resim bilgisini güncelle
+                    cursor.execute("UPDATE kitaplar SET resim = %s WHERE id = %s", (dosya_adi, kitap_id))
+                    db.commit()
+                    flash("Kitap bilgileri ve resmi güncellendi.", "info")
+
+            else:
+                flash("Kitap bilgileri güncellendi. (Resim güncellenmedi)", "info")
+
+
 
     cursor.execute("SELECT * FROM kitaplar")
     kitaplar = cursor.fetchall()
@@ -138,7 +170,6 @@ def kitap_islem():
 def odunc():
     cursor.execute("SELECT * FROM kitaplar WHERE mevcut = TRUE")
     kitaplar = cursor.fetchall()
-
     cursor.execute("SELECT o.id as odunc_id, k.ad as kitap_ad FROM odunc o JOIN kitaplar k ON o.kitap_id = k.id WHERE o.kullanici_id = %s AND o.teslim_edildi = FALSE", (session['user_id'],))
     oduncler = cursor.fetchall()
 
