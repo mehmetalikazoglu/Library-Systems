@@ -1,44 +1,56 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="text-center">
-    <h2>Kütüphane Sistemine Hoşgeldiniz</h2>
-    <p>Mevcut kitapları aşağıda görebilirsiniz.</p>
+
+<div class="container py-5">
+  <div class="text-center mb-4">
+    <h2 class="fw-bold">📚 Kütüphane Sistemine Hoş Geldiniz</h2>
+    <p class="text-muted">Kütüphanemizdeki kitapları aşağıda liste halinde görebilirsiniz.</p>
+  </div>
+
+  {% for kitap in kitaplar %}
+  <div class="card mb-4 shadow-sm border-0">
+    <div class="row g-0 align-items-center">
+      <div class="col-md-2 text-center p-2">
+        <img src="{{ url_for('static', filename='resimler/' ~ (kitap.resim if kitap.resim else 'default.jpeg')) }}"
+             class="img-fluid rounded"
+             style="max-height: 150px; object-fit: cover;"
+             alt="Kitap Resmi">
+      </div>
+      <div class="col-md-7">
+        <div class="card-body">
+          <h5 class="card-title mb-1">{{ kitap.ad }}</h5>
+          <p class="card-text mb-0"><strong>Yazar:</strong> {{ kitap.yazar }}</p>
+          <p class="card-text"><strong>Baskı Yılı:</strong> {{ kitap.baski_yili }}</p>
+        </div>
+      </div>
+      <div class="col-md-3 text-md-end text-center pe-4">
+        {% if kitap.mevcut %}
+          <span class="badge bg-success px-3 py-2 mt-3">Mevcut</span>
+        {% else %}
+          <span class="badge bg-danger px-3 py-2 mt-3">Ödünçte</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
 </div>
 
-<table class="table table-striped mt-4">
-    <thead>
-        <tr>
-            <th>Görsel</th>
-            <th>Kitap Adı</th>
-            <th>Yazar</th>
-            <th>Baskı Yılı</th>
-            <th>Durum</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for kitap in kitaplar %}
-        <tr>
-            <td style="width: 100px;">
-                {% if kitap.resim %}
-                    <img src="{{ url_for('static', filename='resimler/' + kitap.resim) }}" alt="Kitap Resmi" style="max-width: 80px; height: auto;">
-                {% else %}
-                    <img src="{{ url_for('static', filename='resimler/default.jpeg') }}" alt="Varsayılan Resim" style="max-width: 80px; height: 120
-                    px;">
-                {% endif %}
-            </td>
-            <td>{{ kitap.ad }}</td>
-            <td>{{ kitap.yazar }}</td>
-            <td>{{ kitap.baski_yili }}</td>
-            <td>
-                {% if kitap.mevcut %}
-                    <span class="badge bg-success">Mevcut</span>
-                {% else %}
-                    <span class="badge bg-danger">Ödünçte</span>
-                {% endif %}
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<!-- Modern stil -->
+<style>
+  .card-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+  }
+
+  .card-text {
+    font-size: 0.95rem;
+    color: #555;
+  }
+
+  .badge {
+    font-size: 0.9rem;
+    border-radius: 1rem;
+  }
+</style>
 
 {% endblock %}
