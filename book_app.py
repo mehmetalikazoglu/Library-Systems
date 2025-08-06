@@ -185,6 +185,16 @@ def odunc():
 
     return render_template("odunc.html", kitaplar=kitaplar, oduncler=oduncler)
 
+
+
+UPLOAD_FOLDER = 'static/profil_fotograflari'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 @app.route('/hesabim', methods=["GET", "POST"])
 @login_required
 def hesabim():
@@ -192,11 +202,26 @@ def hesabim():
         if 'guncelle' in request.form:
             ad = request.form['ad']
             email = request.form['email']
+
+            if 'profil_resmi' in request.files:
+                profil_resmi = request.files['profil_resmi']
+                if profil_resmi and profil_resmi.filename != '':
+                    dosya_adi = secure_filename(profil_resmi.filename)
+                    kayit_yolu = os.path.join('static/profil_fotograflari', dosya_adi)
+                    profil_resmi.save(kayit_yolu)
+
+                    cursor.execute("UPDATE kullanicilar SET profil_resmi = %s WHERE id = %s", (dosya_adi, session['user_id']))
+
             cursor.execute("UPDATE kullanicilar SET ad = %s, email = %s WHERE id = %s",
                            (ad, email, session['user_id']))
             db.commit()
             session['user_ad'] = ad
             flash("Bilgiler güncellendi.", "success")
+
+        elif 'resim_kaldir' in request.form:
+            cursor.execute("UPDATE kullanicilar SET profil_resmi = NULL WHERE id = %s", (session['user_id'],))
+            db.commit()
+            flash("Profil fotoğrafınız kaldırıldı. Varsayılan fotoğraf yüklendi.", "info")
 
         elif 'sifre' in request.form:
             mevcut_sifre = request.form['mevcut_sifre']
@@ -223,6 +248,7 @@ def hesabim():
     cursor.execute("SELECT * FROM kullanicilar WHERE id = %s", (session['user_id'],))
     user = cursor.fetchone()
     return render_template("hesabim.html", user=user)
+
 
 if __name__ == '__main__':
     app.run(debug=True)

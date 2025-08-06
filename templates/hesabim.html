@@ -1,35 +1,60 @@
 {% extends "base.html" %}
 {% block content %}
-<h3>Hesap Ayarları</h3>
 
-<form method="POST" class="row g-3">
-    <div class="col-md-6">
-        <label>Ad:</label>
-        <input type="text" name="ad" value="{{ user.ad }}" class="form-control" required>
-    </div>
-    <div class="col-md-6">
-        <label>Email:</label>
-        <input type="email" name="email" value="{{ user.email }}" class="form-control" required>
-    </div>
-    <div class="col-md-12">
-        <button name="guncelle" class="btn btn-primary">Bilgileri Güncelle</button>
-    </div>
-</form>
+<div class="container mt-4">
+    <h3 class="mb-4">Hesap Ayarları</h3>
 
-<hr>
+    <form method="POST" enctype="multipart/form-data" class="row g-3 shadow-sm p-4 rounded bg-light">
+        <!-- Profil Fotoğrafı -->
+        <div class="col-md-4 text-center">
+            <img src="{{ url_for('static', filename='profil_fotograflari/' ~ user.profil_resmi) if user.profil_resmi else url_for('static', filename='defaultprofil.jpeg') }}" 
+                 class="img-thumbnail rounded-circle mb-2" style="width: 150px; height: 150px; object-fit: cover;">
+            <div class="form-group">
+                <label for="profil_resmi" class="form-label">Profil Fotoğrafı</label>
+                <input type="file" name="profil_resmi" id="profil_resmi" class="form-control" accept="image/*">
+            </div>
+            <br>
+                 {% if user.profil_resmi %}
+        <form method="POST">
+            <button type="submit" name="resim_kaldir" class="btn btn-outline-dark btn-sm">Fotoğrafı Kaldır</button>
+        </form>
+        {% endif %}
+        </div>
 
-<h4>Şifre Değiştir</h4>
-<form method="POST">
-    <input type="password" name="mevcut_sifre" class="form-control mb-2" placeholder="Mevcut Şifre" required>
-    <input type="password" name="yeni_sifre" class="form-control mb-2" placeholder="Yeni Şifre" required>
-    <button type="submit" name="sifre" class="btn btn-warning w-100">Şifreyi Güncelle</button>
-</form>
+        <!-- Ad ve Email -->
+        <div class="col-md-8">
+            <div class="mb-3">
+                <label for="ad" class="form-label">Adınız</label>
+                <input type="text" name="ad" value="{{ user.ad }}" class="form-control" id="ad" required>
+            </div>
+            <div class="mb-3">
+                <label for="email" class="form-label">E-posta</label>
+                <input type="email" name="email" value="{{ user.email }}" class="form-control" id="email" required>
+            </div>
+            <button type="submit" name="guncelle" class="btn btn-primary w-100">Bilgileri Güncelle</button>
+        </div>
+    </form>
 
+    <hr class="my-4">
 
-<hr>
+    <!-- Şifre Güncelle -->
+    <h4>Şifre Değiştir</h4>
+    <form method="POST" class="shadow-sm p-4 rounded bg-light">
+        <input type="password" name="mevcut_sifre" class="form-control mb-2" placeholder="Mevcut Şifre" required>
+        <input type="password" name="yeni_sifre" class="form-control mb-2" placeholder="Yeni Şifre" required>
+        <button type="submit" name="sifre" class="btn btn-warning w-100">Şifreyi Güncelle</button>
+    </form>
 
-<h4 class="text-danger">Hesabı Sil</h4>
-<form method="POST">
-    <button name="sil" class="btn btn-danger" onclick="return confirm('Hesabınızı silmek istediğinize emin misiniz?')">Hesabı Sil</button>
-</form>
+    <hr class="my-4">
+
+    <!-- Hesap Sil -->
+    <h4 class="text-danger">Hesabı Sil</h4>
+    <form method="POST">
+        <button name="sil" class="btn btn-danger" onclick="return confirm('Hesabınızı silmek istediğinize emin misiniz?')">
+            Hesabı Sil
+        </button>
+        <br>
+    </form>
+</div>
+
 {% endblock %}
