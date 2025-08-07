@@ -52,6 +52,7 @@
 <body>
 
 <!-- Navbar -->
+<!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4 shadow-sm">
     <div class="container-fluid">
         <a class="navbar-brand" href="/"><h3>📚 Kütüphane</h3></a>
@@ -67,11 +68,19 @@
                         <a class="nav-link" href="/kitap_islem">Kitap İşlemleri</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/odunc"> Ödünç / Geri Ver</a>
+                        <a class="nav-link" href="/odunc">Ödünç / Geri Ver</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/hesabim">Hesabım</a>
+
+                    <!-- Profil Fotoğrafı -->
+                    <li class="nav-item ms-2 d-flex align-items-center">
+                        <a href="/hesabim" class="d-flex align-items-center text-decoration-none">
+                            <img src="{% if g.user and g.user.profil_resmi %}{{ url_for('static', filename='profil_fotograflari/' ~ g.user.profil_resmi) }}{% else %}{{ url_for('static', filename='defaultprofil.jpeg') }}{% endif %}" 
+                                 alt="Profil" 
+                                 class="rounded-circle" 
+                                 style="width: 35px; height: 35px; object-fit: cover;">
+                        </a>
                     </li>
+
                     <li class="nav-item">
                         <a class="nav-link text-danger" href="/logout">Çıkış</a>
                     </li>
@@ -87,6 +96,7 @@
         </div>
     </div>
 </nav>
+
 
 <!-- Sayfa İçeriği -->
 <div class="container mt-4">
