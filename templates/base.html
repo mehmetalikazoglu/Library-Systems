@@ -47,11 +47,19 @@
                 padding: 10px 0;
             }
         }
+
+        /* küçük profil resmine tıklanabilir görünüm */
+        .nav-profile {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            object-fit: cover;
+            display: inline-block;
+        }
     </style>
 </head>
 <body>
 
-<!-- Navbar -->
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4 shadow-sm">
     <div class="container-fluid">
@@ -63,7 +71,7 @@
 
         <div class="collapse navbar-collapse justify-content-end" id="navMenu">
             <ul class="navbar-nav align-items-lg-center">
-                {% if session.user_id %}
+                {% if session.get('user_id') %}
                     <li class="nav-item">
                         <a class="nav-link" href="/kitap_islem">Kitap İşlemleri</a>
                     </li>
@@ -71,13 +79,17 @@
                         <a class="nav-link" href="/odunc">Ödünç / Geri Ver</a>
                     </li>
 
-                    <!-- Profil Fotoğrafı -->
+                    <!-- Profil Fotoğrafı (session'dan okunur) -->
                     <li class="nav-item ms-2 d-flex align-items-center">
-                        <a href="/hesabim" class="d-flex align-items-center text-decoration-none">
-                            <img src="{% if g.user and g.user.profil_resmi %}{{ url_for('static', filename='profil_fotograflari/' ~ g.user.profil_resmi) }}{% else %}{{ url_for('static', filename='defaultprofil.jpeg') }}{% endif %}" 
-                                 alt="Profil" 
-                                 class="rounded-circle" 
-                                 style="width: 35px; height: 35px; object-fit: cover;">
+                        <a href="/hesabim" class="d-flex align-items-center text-decoration-none" title="{{ session.get('user_ad', '') }}">
+                            {% set prof = session.get('profil_resmi') %}
+                            {% if prof %}
+                                <img src="{{ url_for('static', filename='profil_fotograflari/' ~ prof) }}" 
+                                     alt="Profil" class="nav-profile">
+                            {% else %}
+                                <img src="{{ url_for('static', filename='profil_fotograflari/defaultprofil.jpeg') }}" 
+                                     alt="Profil" class="nav-profile">
+                            {% endif %}
                         </a>
                     </li>
 
