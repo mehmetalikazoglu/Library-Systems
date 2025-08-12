@@ -4,12 +4,37 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <style>
+    /* Kartların giriş animasyonu */
     .card-custom {
         background-color: #f9f9f9;
         border-radius: 10px;
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         padding: 20px;
         margin-bottom: 30px;
+        opacity: 0;
+        transform: translateY(20px);
+        animation: fadeSlideUp 0.6s ease-out forwards;
+    }
+
+    .card-custom:nth-child(1) { animation-delay: 0.1s; }
+    .card-custom:nth-child(2) { animation-delay: 0.3s; }
+
+    @keyframes fadeSlideUp {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Butona tıklayınca pulse efekti */
+    .btn-success.clicked, .btn-warning.clicked {
+        animation: pulse 0.4s ease;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(0.95); }
+        100% { transform: scale(1); }
     }
 
     h3 i {
@@ -20,13 +45,18 @@
     select {
         width: 100%;
     }
+
+    /* Toast bildirimi konumu */
+    .toast {
+        z-index: 9999;
+    }
 </style>
 
 <div class="container mt-4">
 
     <div class="card-custom">
         <h3><i class="fas fa-book-medical"></i> Kitap Ödünç Al</h3>
-        <form method="POST" class="row g-3">
+        <form method="POST" class="row g-3" id="oduncForm">
             <div class="col-md-10">
                 <select name="kitap_id" class="form-select select2" required>
                     <option disabled selected> Kitap seç...</option>
@@ -36,7 +66,7 @@
                 </select>
             </div>
             <div class="col-md-2 d-grid">
-                <button name="al" class="btn btn-success">
+                <button type="submit" name="al" class="btn btn-success">
                     <i class="fas fa-hand-holding"></i> Ödünç Al
                 </button>
             </div>
@@ -45,7 +75,7 @@
 
     <div class="card-custom">
         <h3><i class="fas fa-undo-alt"></i> Ödünç Alınan Kitaplar</h3>
-        <form method="POST" class="row g-3">
+        <form method="POST" class="row g-3" id="iadeForm">
             <div class="col-md-10">
                 <select name="odunc_id" class="form-select select2" required>
                     <option disabled selected> Kitap seç...</option>
@@ -55,7 +85,7 @@
                 </select>
             </div>
             <div class="col-md-2 d-grid">
-                <button name="teslim" class="btn btn-warning">
+                <button type="submit" name="teslim" class="btn btn-warning">
                     <i class="fas fa-undo"></i> Geri Ver
                 </button>
             </div>
@@ -64,12 +94,48 @@
 
 </div>
 
+<!-- Toast mesajları -->
+<div class="toast align-items-center text-white bg-success border-0 position-fixed bottom-0 end-0 m-3" role="alert" id="toastSuccess">
+    <div class="d-flex">
+        <div class="toast-body">
+            📚 İşlem başarılı!
+        </div>
+    </div>
+</div>
+
+<div class="toast align-items-center text-white bg-danger border-0 position-fixed bottom-0 end-0 m-3" role="alert" id="toastError">
+    <div class="d-flex">
+        <div class="toast-body">
+            ❌ Bir hata oluştu!
+        </div>
+    </div>
+</div>
+
 <script>
     $(document).ready(function() {
         $('.select2').select2({
             theme: "bootstrap-5",
             placeholder: "Seçin",
             allowClear: true
+        });
+
+        // Butona tıklanınca pulse efekti
+        document.querySelectorAll("button").forEach(btn => {
+            btn.addEventListener("click", () => {
+                btn.classList.add("clicked");
+                setTimeout(() => btn.classList.remove("clicked"), 400);
+            });
+        });
+
+        // Form gönderiminden sonra toast göster (simülasyon)
+        document.getElementById("oduncForm").addEventListener("submit", function(e) {
+            e.preventDefault(); // demo amaçlı
+            new bootstrap.Toast(document.getElementById("toastSuccess")).show();
+        });
+
+        document.getElementById("iadeForm").addEventListener("submit", function(e) {
+            e.preventDefault(); // demo amaçlı
+            new bootstrap.Toast(document.getElementById("toastSuccess")).show();
         });
     });
 </script>

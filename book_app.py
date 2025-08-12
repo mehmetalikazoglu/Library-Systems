@@ -202,22 +202,35 @@ def odunc():
 
     if request.method == "POST":
         if 'al' in request.form:
-            kitap_id = request.form['kitap_id']
-            cursor.execute("INSERT INTO odunc (kullanici_id, kitap_id) VALUES (%s, %s)", (session['user_id'], kitap_id))
+            kitap_id = request.form.get('kitap_id')
+
+            if not kitap_id:  # Kitap seçilmemişse
+                flash("Lütfen bir kitap seçin.", "warning")
+                return redirect(url_for('odunc'))
+
+            cursor.execute("INSERT INTO odunc (kullanici_id, kitap_id) VALUES (%s, %s)", 
+                           (session['user_id'], kitap_id))
             cursor.execute("UPDATE kitaplar SET mevcut = FALSE WHERE id = %s", (kitap_id,))
             db.commit()
             flash("Kitap ödünç alındı.", "success")
 
         elif 'teslim' in request.form:
-            odunc_id = request.form['odunc_id']
+            odunc_id = request.form.get('odunc_id')
+
+            if not odunc_id:  # İade için kitap seçilmemişse
+                flash("Lütfen iade edilecek kitabı seçin.", "warning")
+                return redirect(url_for('odunc'))
+
             cursor.execute("UPDATE odunc SET teslim_edildi = TRUE WHERE id = %s", (odunc_id,))
-            cursor.execute("UPDATE kitaplar SET mevcut = TRUE WHERE id = (SELECT kitap_id FROM odunc WHERE id = %s)", (odunc_id,))
+            cursor.execute("UPDATE kitaplar SET mevcut = TRUE WHERE id = (SELECT kitap_id FROM odunc WHERE id = %s)", 
+                           (odunc_id,))
             db.commit()
             flash("Kitap iade edildi.", "info")
 
         return redirect(url_for('odunc'))
 
     return render_template("odunc.html", kitaplar=kitaplar, oduncler=oduncler)
+
 
 
 
