@@ -2,13 +2,13 @@
 {% block content %}
 
 <div class="container py-5">
-  <div class="text-center mb-4">
+  <div class="text-center mb-4 welcome-text">
     <h2 class="fw-bold">📚 Kütüphane Sistemine Hoş Geldiniz</h2>
     <p class="text-muted">Kütüphanemizdeki kitapları aşağıda liste halinde görebilirsiniz.</p>
   </div>
 
   {% for kitap in kitaplar %}
-  <div class="card mb-4 shadow-sm border-0">
+  <div class="card mb-4 shadow-sm border-0 kitap-card hidden" style="animation-delay: {{ loop.index0 * 0.15 }}s;">
     <div class="row g-0 align-items-center">
       <div class="col-md-2 text-center p-2">
         <img src="{{ url_for('static', filename='resimler/' ~ (kitap.resim if kitap.resim else 'default.jpeg')) }}"
@@ -35,8 +35,43 @@
   {% endfor %}
 </div>
 
-<!-- Modern stil -->
+<!-- Modern stil + animasyon -->
 <style>
+  /* Hoş geldiniz yazısı animasyonu */
+  .welcome-text {
+    animation: fadeSlideDown 1s ease-out forwards;
+    opacity: 0;
+  }
+
+  @keyframes fadeSlideDown {
+    0% {
+      transform: translateY(-40px) scale(0.95);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+  }
+
+  /* Kitap kartları için fade + scale animasyonu */
+  .kitap-card {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+    transition: all 0.6s ease-out;
+  }
+
+  .kitap-card.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  /* Başlangıçta gizle */
+  .hidden {
+    opacity: 0;
+  }
+
+  /* Diğer stiller */
   .card-title {
     font-size: 1.2rem;
     font-weight: 600;
@@ -52,5 +87,25 @@
     border-radius: 1rem;
   }
 </style>
+
+<!-- Scroll ile görünce animasyon -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const cards = document.querySelectorAll(".kitap-card");
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("show");
+        observer.unobserve(entry.target); // Tekrar animasyon yapmaması için
+      }
+    });
+  }, { threshold: 0.2 });
+
+  cards.forEach(card => {
+    observer.observe(card);
+  });
+});
+</script>
 
 {% endblock %}
