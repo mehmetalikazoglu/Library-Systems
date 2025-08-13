@@ -8,7 +8,7 @@
 
         <!-- Profil Fotoğrafı -->
         <div class="col-md-4 text-center">
-            <img src="{{ url_for('static', filename='profil_fotograflari/' ~ user.profil_resmi) if user.profil_resmi else url_for('static', filename='defaultprofil.jpeg') }}" 
+            <img src="{{ url_for('static', filename='profil_fotograflari/' ~ user.profil_resmi) if user.profil_resmi else url_for('static', filename='defaultprofil.jpg') }}" 
                  class="img-thumbnail rounded-circle mb-2" style="width: 150px; height: 150px; object-fit: cover;">
             
             <div class="form-group">

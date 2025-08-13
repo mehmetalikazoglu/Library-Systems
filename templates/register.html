@@ -19,35 +19,64 @@
   }
 
   .register-card {
-    background-color: rgba(255, 254, 254, 0.7);
+    background-color: rgba(255, 254, 254, 0.65);
     border-radius: 1rem;
     padding: 2rem;
     width: 100%;
     max-width: 400px;
     box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    animation: fadeScale 0.8s ease forwards;
   }
 
   .form-control {
     border-radius: 0.5rem;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: slideUp 0.6s ease forwards;
   }
+
+  .form-control:nth-child(1) { animation-delay: 0.2s; }
+  .form-control:nth-child(2) { animation-delay: 0.4s; }
+  .form-control:nth-child(3) { animation-delay: 0.6s; }
+  .form-control:nth-child(4) { animation-delay: 0.8s; }
 
   .btn-primary {
     width: 100%;
     border-radius: 0.5rem;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: slideUp 0.6s ease forwards;
+    animation-delay: 1s;
   }
 
   .login-link {
     text-align: center;
     margin-top: 3px;
+    opacity: 0;
+    animation: fadeIn 0.8s ease forwards;
+    animation-delay: 1.2s;
+  }
+
+  @keyframes fadeScale {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  @keyframes slideUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeIn {
+    to { opacity: 1; }
   }
 </style>
 
 <div class="register-container">
   <div class="register-card">
     <h3 class="text-center mb-4">Kayıt Ol</h3>
-      <form method="POST">
-        <div class="mb-3">
-        <label for="kullanici_adi" class="form-label">Ad</label>
+    <form method="POST">
+      <div class="mb-3">
+        <label for="ad" class="form-label">Ad</label>
         <input type="text" class="form-control" id="ad" name="ad" required>
       </div>
       <div class="mb-3">
@@ -64,7 +93,6 @@
       </div>
       <button type="submit" class="btn btn-primary">Kayıt Ol</button>
     </form>
-
     <div class="login-link">
       <p>Zaten hesabınız var mı? <a href="{{ url_for('login') }}">Giriş Yap</a></p>
     </div>

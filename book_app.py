@@ -250,7 +250,7 @@ def hesabim():
     şifre değiştirme ve hesap silme işlemlerini tek bir route üzerinden yönetir.
     - Dosyalar 'static/profil_fotograflari/' içine kaydedilir.
     - Yükleme sonrası session['profil_resmi'] güncellenir (navbar için).
-    - Varsayılan görsel: 'defaultprofil.jpeg' (profil_fotograflari klasöründe).
+    - Varsayılan görsel: 'defaultprofil.jpg' (profil_fotograflari klasöründe).
     """
     cursor = get_cursor()
 
@@ -260,8 +260,8 @@ def hesabim():
 
     # Güvence: eğer veritabanında profil_resmi boşsa local user dict'ine default atıyoruz
     if not user.get('profil_resmi'):
-        user['profil_resmi'] = 'defaultprofil.jpeg'
-        session['profil_resmi'] = 'defaultprofil.jpeg'
+        user['profil_resmi'] = 'defaultprofil.jpg'
+        session['profil_resmi'] = 'defaultprofil.jpg'
     else:
         # session'da da senkron tut
         session['profil_resmi'] = user['profil_resmi']
@@ -285,7 +285,7 @@ def hesabim():
                 dosya.save(hedef_yol)
 
                 # eski dosyayı sil (default değilse)
-                if user.get('profil_resmi') and user['profil_resmi'] != 'defaultprofil.jpeg':
+                if user.get('profil_resmi') and user['profil_resmi'] != 'defaultprofil.jpg':
                     eski_yol = os.path.join(hedef_klasor, user['profil_resmi'])
                     if os.path.exists(eski_yol):
                         try:
@@ -310,7 +310,7 @@ def hesabim():
         # ----- 2) Fotoğraf kaldırma (sadece yeni dosya yüklenmediyse çalışır veya kullanıcı ayrı olarak kaldırdı) -----
         # Eğer kullanıcı 'resim_kaldir' işaretlediyse ve şu anda yüklü resim default değilse sil
         if 'resim_kaldir' in request.form and (not (dosya and dosya.filename)):
-            if user.get('profil_resmi') and user['profil_resmi'] != 'defaultprofil.jpeg':
+            if user.get('profil_resmi') and user['profil_resmi'] != 'defaultprofil.jpg':
                 hedef_klasor = os.path.join(app.root_path, 'static', 'profil_fotograflari')
                 eski_yol = os.path.join(hedef_klasor, user['profil_resmi'])
                 if os.path.exists(eski_yol):
@@ -321,9 +321,9 @@ def hesabim():
 
             # veritabanına default at
             cursor.execute("UPDATE kullanicilar SET profil_resmi = %s WHERE id = %s",
-                           ('defaultprofil.jpeg', session['user_id']))
+                           ('defaultprofil.jpg', session['user_id']))
             db.commit()
-            session['profil_resmi'] = 'defaultprofil.jpeg'
+            session['profil_resmi'] = 'defaultprofil.jpg'
             flash("Profil fotoğrafı kaldırıldı.", "info")
 
             # kullanıcı verisini güncelle (sayfaya yansısın)
@@ -367,7 +367,7 @@ def hesabim():
         # ----- 5) Hesap silme -----
         if 'sil' in request.form:
             # eski resim varsa sil
-            if user.get('profil_resmi') and user['profil_resmi'] != 'defaultprofil.jpeg':
+            if user.get('profil_resmi') and user['profil_resmi'] != 'defaultprofil.jpg':
                 hedef_klasor = os.path.join(app.root_path, 'static', 'profil_fotograflari')
                 eski_yol = os.path.join(hedef_klasor, user['profil_resmi'])
                 if os.path.exists(eski_yol):
@@ -387,8 +387,8 @@ def hesabim():
     user = cursor.fetchone()
     # Güvence: eğer None veya boşsa default at
     if not user.get('profil_resmi'):
-        user['profil_resmi'] = 'defaultprofil.jpeg'
-        session['profil_resmi'] = 'defaultprofil.jpeg'
+        user['profil_resmi'] = 'defaultprofil.jpg'
+        session['profil_resmi'] = 'defaultprofil.jpg'
     else:
         session['profil_resmi'] = user['profil_resmi']
 
