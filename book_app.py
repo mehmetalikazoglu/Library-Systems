@@ -245,47 +245,28 @@ def allowed_file(filename):
 @app.route('/hesabim', methods=["GET", "POST"])
 @login_required
 def hesabim():
-    """
-    Hesabım sayfası: profil resmi yükleme/kaldırma, kullanıcı bilgileri güncelleme,
-    şifre değiştirme ve hesap silme işlemlerini tek bir route üzerinden yönetir.
-    - Dosyalar 'static/profil_fotograflari/' içine kaydedilir.
-    - Yükleme sonrası session['profil_resmi'] güncellenir (navbar için).
-    - Varsayılan görsel: 'defaultprofil.jpg' (profil_fotograflari klasöründe).
-    """
     cursor = get_cursor()
 
-    # 1) Mevcut kullanıcı bilgilerini çek (user her zaman tanımlı olur)
+    # Kullanıcı bilgilerini al
     cursor.execute("SELECT * FROM kullanicilar WHERE id = %s", (session['user_id'],))
     user = cursor.fetchone()
 
-    # Güvence: eğer veritabanında profil_resmi boşsa local user dict'ine default atıyoruz
-    if not user.get('profil_resmi'):
-        user['profil_resmi'] = 'defaultprofil.jpg'
-        session['profil_resmi'] = 'defaultprofil.jpg'
-    else:
-        # session'da da senkron tut
-        session['profil_resmi'] = user['profil_resmi']
-
     if request.method == "POST":
-        # ----- 1) Dosya yükleme (öncelik: yeni dosya yüklendiyse bu yapılır) -----
         dosya = request.files.get('profil_resmi')
+
+        # 📌 Fotoğraf yükleme
         if dosya and dosya.filename:
-            # izinli uzantı kontrolü (allowed_file fonksiyonunu proje genelinden kullanıyoruz)
             if allowed_file(dosya.filename):
-                # hedef klasör
                 hedef_klasor = os.path.join(app.root_path, 'static', 'profil_fotograflari')
                 os.makedirs(hedef_klasor, exist_ok=True)
 
-                # benzersiz dosya adı (uuid ile) -> cache & çakışma önleme
                 _, ext = os.path.splitext(secure_filename(dosya.filename))
                 yeni_dosya_adi = f"{uuid.uuid4().hex}{ext.lower()}"
                 hedef_yol = os.path.join(hedef_klasor, yeni_dosya_adi)
-
-                # dosyayı kaydet
                 dosya.save(hedef_yol)
 
-                # eski dosyayı sil (default değilse)
-                if user.get('profil_resmi') and user['profil_resmi'] != 'defaultprofil.jpg':
+                # Eski fotoğrafı sil (varsayılan değilse)
+                if user.get('profil_resmi'):
                     eski_yol = os.path.join(hedef_klasor, user['profil_resmi'])
                     if os.path.exists(eski_yol):
                         try:
@@ -293,24 +274,22 @@ def hesabim():
                         except OSError:
                             pass
 
-                # veritabanına yaz ve session güncelle
                 cursor.execute("UPDATE kullanicilar SET profil_resmi = %s WHERE id = %s",
                                (yeni_dosya_adi, session['user_id']))
                 db.commit()
-                session['profil_resmi'] = yeni_dosya_adi
-                flash("Profil fotoğrafı güncellendi.", "success")
 
-                # kullanıcı verisini güncelle (sayfaya yansısın)
+                # Yeni bilgileri çek
                 cursor.execute("SELECT * FROM kullanicilar WHERE id = %s", (session['user_id'],))
                 user = cursor.fetchone()
 
+                session['profil_resmi'] = yeni_dosya_adi
+                flash("Profil fotoğrafı güncellendi.", "success")
             else:
-                flash("Yalnızca png/jpg/jpeg/gif uzantılı dosyalar yüklenebilir.", "warning")
+                flash("Sadece png, jpg, jpeg, gif yükleyebilirsiniz.", "warning")
 
-        # ----- 2) Fotoğraf kaldırma (sadece yeni dosya yüklenmediyse çalışır veya kullanıcı ayrı olarak kaldırdı) -----
-        # Eğer kullanıcı 'resim_kaldir' işaretlediyse ve şu anda yüklü resim default değilse sil
-        if 'resim_kaldir' in request.form and (not (dosya and dosya.filename)):
-            if user.get('profil_resmi') and user['profil_resmi'] != 'defaultprofil.jpg':
+        # 📌 Fotoğraf kaldırma
+        elif 'resim_kaldir' in request.form:
+            if user.get('profil_resmi'):
                 hedef_klasor = os.path.join(app.root_path, 'static', 'profil_fotograflari')
                 eski_yol = os.path.join(hedef_klasor, user['profil_resmi'])
                 if os.path.exists(eski_yol):
@@ -319,41 +298,28 @@ def hesabim():
                     except OSError:
                         pass
 
-            # veritabanına default at
-            cursor.execute("UPDATE kullanicilar SET profil_resmi = %s WHERE id = %s",
-                           ('defaultprofil.jpg', session['user_id']))
+            cursor.execute("UPDATE kullanicilar SET profil_resmi = NULL WHERE id = %s", (session['user_id'],))
             db.commit()
-            session['profil_resmi'] = 'defaultprofil.jpg'
+            session['profil_resmi'] = None
             flash("Profil fotoğrafı kaldırıldı.", "info")
 
-            # kullanıcı verisini güncelle (sayfaya yansısın)
-            cursor.execute("SELECT * FROM kullanicilar WHERE id = %s", (session['user_id'],))
-            user = cursor.fetchone()
-
-        # ----- 3) Kişisel bilgi güncelleme (ad, soyad, email) -----
-        if 'guncelle' in request.form:
+        # 📌 Bilgi güncelleme
+        elif 'guncelle' in request.form:
             ad = request.form.get('ad')
             soyad = request.form.get('soyad')
             email = request.form.get('email')
-
-            # Basit doğrulama
             if ad and soyad and email:
-                cursor.execute("UPDATE kullanicilar SET ad = %s, soyad = %s, email = %s WHERE id = %s",
+                cursor.execute("UPDATE kullanicilar SET ad=%s, soyad=%s, email=%s WHERE id=%s",
                                (ad, soyad, email, session['user_id']))
                 db.commit()
-                session['user_ad'] = ad
                 flash("Bilgiler güncellendi.", "success")
             else:
                 flash("Ad, soyad ve email boş olamaz.", "warning")
 
-            cursor.execute("SELECT * FROM kullanicilar WHERE id = %s", (session['user_id'],))
-            user = cursor.fetchone()
-
-        # ----- 4) Şifre değişikliği -----
-        if 'sifre' in request.form:
+        # 📌 Şifre değiştirme
+        elif 'sifre' in request.form:
             mevcut_sifre = request.form.get('mevcut_sifre')
             yeni_sifre = request.form.get('yeni_sifre')
-
             cursor.execute("SELECT sifre FROM kullanicilar WHERE id = %s", (session['user_id'],))
             satir = cursor.fetchone()
             if satir and check_password_hash(satir['sifre'], mevcut_sifre):
@@ -364,10 +330,9 @@ def hesabim():
             else:
                 flash("Mevcut şifre yanlış!", "danger")
 
-        # ----- 5) Hesap silme -----
-        if 'sil' in request.form:
-            # eski resim varsa sil
-            if user.get('profil_resmi') and user['profil_resmi'] != 'defaultprofil.jpg':
+        # 📌 Hesap silme
+        elif 'sil' in request.form:
+            if user.get('profil_resmi'):
                 hedef_klasor = os.path.join(app.root_path, 'static', 'profil_fotograflari')
                 eski_yol = os.path.join(hedef_klasor, user['profil_resmi'])
                 if os.path.exists(eski_yol):
@@ -375,24 +340,23 @@ def hesabim():
                         os.remove(eski_yol)
                     except OSError:
                         pass
-
             cursor.execute("DELETE FROM kullanicilar WHERE id = %s", (session['user_id'],))
             db.commit()
             session.clear()
-            flash("Hesabınız silindi.", "danger")
+            flash("Hesap silindi.", "danger")
             return redirect(url_for('index'))
 
-    # Render öncesi kesin güncel kullanıcı bilgisi
-    cursor.execute("SELECT * FROM kullanicilar WHERE id = %s", (session['user_id'],))
-    user = cursor.fetchone()
-    # Güvence: eğer None veya boşsa default at
+        # İşlem sonrası kullanıcı bilgilerini yenile
+        cursor.execute("SELECT * FROM kullanicilar WHERE id = %s", (session['user_id'],))
+        user = cursor.fetchone()
+
+    # Varsayılan fotoğraf ayarı
     if not user.get('profil_resmi'):
-        user['profil_resmi'] = 'defaultprofil.jpg'
-        session['profil_resmi'] = 'defaultprofil.jpg'
-    else:
-        session['profil_resmi'] = user['profil_resmi']
+        user['profil_resmi'] = None
 
     return render_template("hesabim.html", user=user)
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)
