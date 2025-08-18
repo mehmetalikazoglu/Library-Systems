@@ -126,6 +126,17 @@ def logout():
     flash("Çıkış yapıldı.", "info")
     return redirect(url_for('index'))
 
+
+BOOK_UPLOAD_FOLDER = os.path.join('static', 'resimler')
+os.makedirs(BOOK_UPLOAD_FOLDER, exist_ok=True)
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+app.config['BOOK_UPLOAD_FOLDER'] = BOOK_UPLOAD_FOLDER
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 @app.route('/kitap_islem', methods=["GET", "POST"])
 @login_required
 def kitap_islem():
@@ -139,10 +150,13 @@ def kitap_islem():
             dosya_adi = 'default.jpeg'
             if resim_dosyasi and allowed_file(resim_dosyasi.filename):
                 dosya_adi = str(uuid.uuid4()) + os.path.splitext(resim_dosyasi.filename)[1]
-                resim_dosyasi.save(os.path.join(app.config['UPLOAD_FOLDER'], dosya_adi))
+                resim_yolu = os.path.join(app.config['UPLOAD_FOLDER'], dosya_adi)
+                resim_dosyasi.save(resim_yolu)
 
-            cursor.execute("INSERT INTO kitaplar (ad, yazar, baski_yili, resim) VALUES (%s, %s, %s, %s)",
-                           (ad, yazar, baski_yili, dosya_adi))
+            cursor.execute(
+                "INSERT INTO kitaplar (ad, yazar, baski_yili, resim) VALUES (%s, %s, %s, %s)",
+                (ad, yazar, baski_yili, dosya_adi)
+            )
             db.commit()
             flash("Kitap eklendi.", "success")
 
@@ -168,8 +182,10 @@ def kitap_islem():
             yeni_yil = request.form['yeni_yil']
             yeni_resim = request.files.get('yeni_resim')
 
-            cursor.execute("UPDATE kitaplar SET ad=%s, yazar=%s, baski_yili=%s WHERE id=%s",
-                           (yeni_ad, yeni_yazar, yeni_yil, kitap_id))
+            cursor.execute(
+                "UPDATE kitaplar SET ad=%s, yazar=%s, baski_yili=%s WHERE id=%s",
+                (yeni_ad, yeni_yazar, yeni_yil, kitap_id)
+            )
 
             if yeni_resim and allowed_file(yeni_resim.filename):
                 cursor.execute("SELECT resim FROM kitaplar WHERE id=%s", (kitap_id,))
@@ -189,6 +205,7 @@ def kitap_islem():
     cursor.execute("SELECT * FROM kitaplar")
     kitaplar = cursor.fetchall()
     return render_template("kitap_islem.html", kitaplar=kitaplar)
+
 
 @app.route('/odunc', methods=["GET", "POST"])
 @login_required
@@ -234,10 +251,11 @@ def odunc():
 
 
 
-UPLOAD_FOLDER = 'static/profil_fotograflari'
+PROFILE_UPLOAD_FOLDER = os.path.join('static', 'profil_fotograflari')
+os.makedirs(PROFILE_UPLOAD_FOLDER, exist_ok=True)
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['PROFILE_UPLOAD_FOLDER'] = PROFILE_UPLOAD_FOLDER
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
