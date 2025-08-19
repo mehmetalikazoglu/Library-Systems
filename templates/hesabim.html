@@ -8,9 +8,8 @@
 
         <!-- Profil Fotoğrafı -->
         <div class="col-md-4 text-center">
-            {% set prof = session.get('profil_resmi') %}
-            {% if prof %}
-                <img src="{{ url_for('static', filename='profil_fotograflari/' ~ prof) }}"
+            {% if session.get('profil_resmi') %}
+                <img src="{{ url_for('static', filename='profil_fotograflari/' ~ session.get('profil_resmi')) }}"
                      alt="Profil" class="img-thumbnail rounded-circle mb-2"
                      style="width: 150px; height: 150px; object-fit: cover;">
             {% else %}
@@ -24,7 +23,7 @@
                 <input type="file" name="profil_resmi" id="profil_resmi" class="form-control" accept="image/*">
             </div>
 
-            {% if prof %}
+            {% if session.get('profil_resmi') %}
             <div class="form-check mt-2">
                 <input class="form-check-input" type="checkbox" name="resim_kaldir" id="resim_kaldir" value="true">
                 <label class="form-check-label" for="resim_kaldir">

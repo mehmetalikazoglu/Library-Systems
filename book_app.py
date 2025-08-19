@@ -250,15 +250,16 @@ def odunc():
 
 
 
-
 PROFILE_UPLOAD_FOLDER = os.path.join('static', 'profil_fotograflari')
 os.makedirs(PROFILE_UPLOAD_FOLDER, exist_ok=True)
+
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 app.config['PROFILE_UPLOAD_FOLDER'] = PROFILE_UPLOAD_FOLDER
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 @app.route('/hesabim', methods=["GET", "POST"])
 @login_required
@@ -275,17 +276,14 @@ def hesabim():
         # 📌 Fotoğraf yükleme
         if dosya and dosya.filename:
             if allowed_file(dosya.filename):
-                hedef_klasor = os.path.join(app.root_path, 'static', 'profil_fotograflari')
-                os.makedirs(hedef_klasor, exist_ok=True)
-
                 _, ext = os.path.splitext(secure_filename(dosya.filename))
                 yeni_dosya_adi = f"{uuid.uuid4().hex}{ext.lower()}"
-                hedef_yol = os.path.join(hedef_klasor, yeni_dosya_adi)
+                hedef_yol = os.path.join(app.config['PROFILE_UPLOAD_FOLDER'], yeni_dosya_adi)
                 dosya.save(hedef_yol)
 
                 # Eski fotoğrafı sil (varsayılan değilse)
-                if user.get('profil_resmi'):
-                    eski_yol = os.path.join(hedef_klasor, user['profil_resmi'])
+                if user.get('profil_resmi') and user['profil_resmi']:
+                    eski_yol = os.path.join(app.config['PROFILE_UPLOAD_FOLDER'], user['profil_resmi'])
                     if os.path.exists(eski_yol):
                         try:
                             os.remove(eski_yol)
@@ -296,11 +294,11 @@ def hesabim():
                                (yeni_dosya_adi, session['user_id']))
                 db.commit()
 
-                # Yeni bilgileri çek
+                # Session ve user güncelle
+                session['profil_resmi'] = yeni_dosya_adi
                 cursor.execute("SELECT * FROM kullanicilar WHERE id = %s", (session['user_id'],))
                 user = cursor.fetchone()
 
-                session['profil_resmi'] = yeni_dosya_adi
                 flash("Profil fotoğrafı güncellendi.", "success")
             else:
                 flash("Sadece png, jpg, jpeg, gif yükleyebilirsiniz.", "warning")
@@ -308,8 +306,7 @@ def hesabim():
         # 📌 Fotoğraf kaldırma
         elif 'resim_kaldir' in request.form:
             if user.get('profil_resmi'):
-                hedef_klasor = os.path.join(app.root_path, 'static', 'profil_fotograflari')
-                eski_yol = os.path.join(hedef_klasor, user['profil_resmi'])
+                eski_yol = os.path.join(app.config['PROFILE_UPLOAD_FOLDER'], user['profil_resmi'])
                 if os.path.exists(eski_yol):
                     try:
                         os.remove(eski_yol)
@@ -342,7 +339,8 @@ def hesabim():
             satir = cursor.fetchone()
             if satir and check_password_hash(satir['sifre'], mevcut_sifre):
                 yeni_hash = generate_password_hash(yeni_sifre)
-                cursor.execute("UPDATE kullanicilar SET sifre = %s WHERE id = %s", (yeni_hash, session['user_id']))
+                cursor.execute("UPDATE kullanicilar SET sifre = %s WHERE id = %s",
+                               (yeni_hash, session['user_id']))
                 db.commit()
                 flash("Şifre başarıyla değiştirildi.", "info")
             else:
@@ -351,8 +349,7 @@ def hesabim():
         # 📌 Hesap silme
         elif 'sil' in request.form:
             if user.get('profil_resmi'):
-                hedef_klasor = os.path.join(app.root_path, 'static', 'profil_fotograflari')
-                eski_yol = os.path.join(hedef_klasor, user['profil_resmi'])
+                eski_yol = os.path.join(app.config['PROFILE_UPLOAD_FOLDER'], user['profil_resmi'])
                 if os.path.exists(eski_yol):
                     try:
                         os.remove(eski_yol)
@@ -373,6 +370,7 @@ def hesabim():
         user['profil_resmi'] = None
 
     return render_template("hesabim.html", user=user)
+
 
 
 
