@@ -101,6 +101,7 @@ def register():
 
     return render_template("register.html")
 
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -370,7 +371,6 @@ def hesabim():
         user['profil_resmi'] = None
 
     return render_template("hesabim.html", user=user)
-
 
 
 
