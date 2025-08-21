@@ -12,7 +12,8 @@ app = Flask(__name__)
 app.secret_key = 'gizli_anahtar'
 
 # Yükleme klasörü ve izin verilen dosya uzantıları
-app.config['UPLOAD_FOLDER'] = 'static/resimler'
+app.config['BOOK_UPLOAD_FOLDER'] = 'static/resimler'
+app.config['PROFILE_UPLOAD_FOLDER']= 'static/profil_fotograflari'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
 
 # MySQL veritabanı yapılandırması
@@ -251,6 +252,7 @@ def odunc():
 
 
 
+# --- Profil yükleme ayarları 
 PROFILE_UPLOAD_FOLDER = os.path.join('static', 'profil_fotograflari')
 os.makedirs(PROFILE_UPLOAD_FOLDER, exist_ok=True)
 
@@ -258,7 +260,8 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 app.config['PROFILE_UPLOAD_FOLDER'] = PROFILE_UPLOAD_FOLDER
 
-def allowed_file(filename):
+
+def allowed_profile_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
@@ -267,23 +270,23 @@ def allowed_file(filename):
 def hesabim():
     cursor = get_cursor()
 
-    # Kullanıcı bilgilerini al
+    # Kullanıcı bilgilerini getir
     cursor.execute("SELECT * FROM kullanicilar WHERE id = %s", (session['user_id'],))
     user = cursor.fetchone()
 
     if request.method == "POST":
-        dosya = request.files.get('profil_resmi')
 
-        # 📌 Fotoğraf yükleme
-        if dosya and dosya.filename:
-            if allowed_file(dosya.filename):
+        # ------------------ PROFİL FOTOĞRAFI YÜKLEME ------------------
+        if 'profil_resmi' in request.files and request.form.get('guncelle'):
+            dosya = request.files['profil_resmi']
+            if dosya and dosya.filename and allowed_profile_file(dosya.filename):
                 _, ext = os.path.splitext(secure_filename(dosya.filename))
-                yeni_dosya_adi = f"{uuid.uuid4().hex}{ext.lower()}"
-                hedef_yol = os.path.join(app.config['PROFILE_UPLOAD_FOLDER'], yeni_dosya_adi)
+                yeni_dosya = f"{uuid.uuid4().hex}{ext.lower()}"
+                hedef_yol = os.path.join(app.config['PROFILE_UPLOAD_FOLDER'], yeni_dosya)
                 dosya.save(hedef_yol)
 
-                # Eski fotoğrafı sil (varsayılan değilse)
-                if user.get('profil_resmi') and user['profil_resmi']:
+                # Eski resmi sil
+                if user['profil_resmi']:
                     eski_yol = os.path.join(app.config['PROFILE_UPLOAD_FOLDER'], user['profil_resmi'])
                     if os.path.exists(eski_yol):
                         try:
@@ -291,36 +294,28 @@ def hesabim():
                         except OSError:
                             pass
 
-                cursor.execute("UPDATE kullanicilar SET profil_resmi = %s WHERE id = %s",
-                               (yeni_dosya_adi, session['user_id']))
+                cursor.execute("UPDATE kullanicilar SET profil_resmi=%s WHERE id=%s",
+                               (yeni_dosya, session['user_id']))
                 db.commit()
-
-                # Session ve user güncelle
-                session['profil_resmi'] = yeni_dosya_adi
-                cursor.execute("SELECT * FROM kullanicilar WHERE id = %s", (session['user_id'],))
-                user = cursor.fetchone()
-
+                session['profil_resmi'] = yeni_dosya
                 flash("Profil fotoğrafı güncellendi.", "success")
-            else:
-                flash("Sadece png, jpg, jpeg, gif yükleyebilirsiniz.", "warning")
 
-        # 📌 Fotoğraf kaldırma
-        elif 'resim_kaldir' in request.form:
-            if user.get('profil_resmi'):
+        # ------------------ FOTOĞRAF KALDIRMA ------------------
+        if 'resim_kaldir' in request.form:
+            if user['profil_resmi']:
                 eski_yol = os.path.join(app.config['PROFILE_UPLOAD_FOLDER'], user['profil_resmi'])
                 if os.path.exists(eski_yol):
                     try:
                         os.remove(eski_yol)
                     except OSError:
                         pass
-
-            cursor.execute("UPDATE kullanicilar SET profil_resmi = NULL WHERE id = %s", (session['user_id'],))
+            cursor.execute("UPDATE kullanicilar SET profil_resmi=NULL WHERE id=%s", (session['user_id'],))
             db.commit()
             session['profil_resmi'] = None
             flash("Profil fotoğrafı kaldırıldı.", "info")
 
-        # 📌 Bilgi güncelleme
-        elif 'guncelle' in request.form:
+        # ------------------ BİLGİ GÜNCELLEME ------------------
+        if 'guncelle' in request.form:
             ad = request.form.get('ad')
             soyad = request.form.get('soyad')
             email = request.form.get('email')
@@ -332,45 +327,47 @@ def hesabim():
             else:
                 flash("Ad, soyad ve email boş olamaz.", "warning")
 
-        # 📌 Şifre değiştirme
-        elif 'sifre' in request.form:
-            mevcut_sifre = request.form.get('mevcut_sifre')
-            yeni_sifre = request.form.get('yeni_sifre')
-            cursor.execute("SELECT sifre FROM kullanicilar WHERE id = %s", (session['user_id'],))
+        # ------------------ ŞİFRE DEĞİŞTİRME ------------------
+        if 'sifre' in request.form:
+            mevcut = request.form.get('mevcut_sifre')
+            yeni = request.form.get('yeni_sifre')
+
+            cursor.execute("SELECT sifre FROM kullanicilar WHERE id=%s", (session['user_id'],))
             satir = cursor.fetchone()
-            if satir and check_password_hash(satir['sifre'], mevcut_sifre):
-                yeni_hash = generate_password_hash(yeni_sifre)
-                cursor.execute("UPDATE kullanicilar SET sifre = %s WHERE id = %s",
-                               (yeni_hash, session['user_id']))
+
+            if satir and check_password_hash(satir['sifre'], mevcut):
+                yeni_hash = generate_password_hash(yeni)
+                cursor.execute("UPDATE kullanicilar SET sifre=%s WHERE id=%s", (yeni_hash, session['user_id']))
                 db.commit()
                 flash("Şifre başarıyla değiştirildi.", "info")
             else:
                 flash("Mevcut şifre yanlış!", "danger")
 
-        # 📌 Hesap silme
-        elif 'sil' in request.form:
-            if user.get('profil_resmi'):
+        # ------------------ HESAP SİLME ------------------
+        if 'sil' in request.form:
+            if user['profil_resmi']:
                 eski_yol = os.path.join(app.config['PROFILE_UPLOAD_FOLDER'], user['profil_resmi'])
                 if os.path.exists(eski_yol):
                     try:
                         os.remove(eski_yol)
                     except OSError:
                         pass
-            cursor.execute("DELETE FROM kullanicilar WHERE id = %s", (session['user_id'],))
+            cursor.execute("DELETE FROM kullanicilar WHERE id=%s", (session['user_id'],))
             db.commit()
             session.clear()
             flash("Hesap silindi.", "danger")
             return redirect(url_for('index'))
 
-        # İşlem sonrası kullanıcı bilgilerini yenile
+        #  Kullanıcıyı tekrar çek (güncel hali)
         cursor.execute("SELECT * FROM kullanicilar WHERE id = %s", (session['user_id'],))
         user = cursor.fetchone()
 
-    # Varsayılan fotoğraf ayarı
-    if not user.get('profil_resmi'):
+    # Varsayılan fotoğraf kontrolü
+    if not user['profil_resmi']:
         user['profil_resmi'] = None
 
     return render_template("hesabim.html", user=user)
+
 
 
 
