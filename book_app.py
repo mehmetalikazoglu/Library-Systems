@@ -12,8 +12,7 @@ app = Flask(__name__)
 app.secret_key = 'gizli_anahtar'
 
 # Yükleme klasörü ve izin verilen dosya uzantıları
-app.config['BOOK_UPLOAD_FOLDER'] = 'static/resimler'
-app.config['PROFILE_UPLOAD_FOLDER']= 'static/profil_fotograflari'
+app.config['UPLOAD_FOLDER'] = 'static/resimler'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
 
 # MySQL veritabanı yapılandırması
@@ -246,7 +245,7 @@ def odunc():
             db.commit()
             flash("Kitap iade edildi.", "info")
 
-        return redirect(url_for('odunc'))
+        return redirect(url_for('odunc', tab='odunc'))
 
     return render_template("odunc.html", kitaplar=kitaplar, oduncler=oduncler)
 

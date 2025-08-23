@@ -25,7 +25,9 @@
       </div>
       <div class="col-md-3 text-md-end text-center pe-4">
         {% if kitap.mevcut %}
-          <span class="badge bg-success px-3 py-2 mt-3">Mevcut</span>
+           <a href="{{ url_for('odunc', kitap_id=kitap.id) }}" 
+            class="badge bg-success px-3 py-2 mt-3 text-decoration-none">
+           Mevcut / AL</a>
         {% else %}
           <span class="badge bg-danger px-3 py-2 mt-3">Ödünçte</span>
         {% endif %}
@@ -35,7 +37,7 @@
   {% endfor %}
 </div>
 
-<!-- Modern stil + animasyon -->
+
 <style>
   /* Hoş geldiniz yazısı animasyonu */
   .welcome-text {
