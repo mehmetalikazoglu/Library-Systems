@@ -1,11 +1,10 @@
 import os
 import uuid
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, g
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 import mysql.connector
 from functools import wraps
-from flask import g
 
 # Flask uygulaması ve yapılandırma
 app = Flask(__name__)
@@ -21,22 +20,15 @@ app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = 'Mehmet1905'
 app.config['MYSQL_DB'] = 'kutuphane'
 
-# Veritabanı bağlantısı
-db = mysql.connector.connect(
-    host=app.config['MYSQL_HOST'],
-    user=app.config['MYSQL_USER'],
-    password=app.config['MYSQL_PASSWORD'],
-    database=app.config['MYSQL_DB']
-)
-cursor = db.cursor(dictionary=True)
 
+# ------------------ DB Yardımcı Fonksiyonlar ------------------
 def get_db():
     if 'db' not in g:
         g.db = mysql.connector.connect(
-            host='localhost',
-            user='root',
-            password='Mehmet1905',
-            database='kutuphane'
+            host=app.config['MYSQL_HOST'],
+            user=app.config['MYSQL_USER'],
+            password=app.config['MYSQL_PASSWORD'],
+            database=app.config['MYSQL_DB']
         )
     return g.db
 
@@ -51,17 +43,8 @@ def close_db(error):
     if db is not None:
         db.close()
 
-@app.before_request
-def load_logged_in_user():
-    cursor = get_cursor()
-    if 'user_id' in session:
-        cursor.execute("SELECT * FROM kullanicilar WHERE id = %s", (session['user_id'],))
-        g.user = cursor.fetchone()
-    else:
-        g.user = None
 
-
-# Kullanıcı oturumu kontrolü için decorator
+# ------------------ Login kontrol decorator ------------------
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -72,19 +55,26 @@ def login_required(f):
     return decorated_function
 
 
-# Dosya uzantısı kontrolü
+# ------------------ Dosya Kontrolü ------------------
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
 
+# ------------------ Ana Sayfa ------------------
 @app.route('/')
 def index():
+    cursor = get_cursor()
     cursor.execute("SELECT * FROM kitaplar")
     kitaplar = cursor.fetchall()
     return render_template("index.html", kitaplar=kitaplar)
 
+
+# ------------------ Kayıt Ol ------------------
 @app.route('/register', methods=["GET", "POST"])
 def register():
+    cursor = get_cursor()
+    db = get_db()
+
     if request.method == "POST":
         ad = request.form.get('ad')
         soyad = request.form.get('soyad')
@@ -102,8 +92,10 @@ def register():
     return render_template("register.html")
 
 
+# ------------------ Giriş Yap ------------------
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    cursor = get_cursor()
     if request.method == "POST":
         email = request.form.get("email")
         sifre = request.form.get("sifre")
@@ -121,6 +113,8 @@ def login():
 
     return render_template("login.html")
 
+
+# ------------------ Çıkış Yap ------------------
 @app.route('/logout')
 def logout():
     session.clear()
@@ -128,19 +122,13 @@ def logout():
     return redirect(url_for('index'))
 
 
-BOOK_UPLOAD_FOLDER = os.path.join('static', 'resimler')
-os.makedirs(BOOK_UPLOAD_FOLDER, exist_ok=True)
-
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-
-app.config['BOOK_UPLOAD_FOLDER'] = BOOK_UPLOAD_FOLDER
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
+# ------------------ Kitap İşlemleri ------------------
 @app.route('/kitap_islem', methods=["GET", "POST"])
 @login_required
 def kitap_islem():
+    cursor = get_cursor()
+    db = get_db()
+
     if request.method == "POST":
         if 'ekle' in request.form:
             ad = request.form['ad']
@@ -208,9 +196,13 @@ def kitap_islem():
     return render_template("kitap_islem.html", kitaplar=kitaplar)
 
 
+# ------------------ Ödünç Alma ------------------
 @app.route('/odunc', methods=["GET", "POST"])
 @login_required
 def odunc():
+    cursor = get_cursor()
+    db = get_db()
+
     cursor.execute("SELECT * FROM kitaplar WHERE mevcut = TRUE")
     kitaplar = cursor.fetchall()
     cursor.execute("""SELECT o.id as odunc_id, k.ad as kitap_ad 
@@ -222,7 +214,7 @@ def odunc():
         if 'al' in request.form:
             kitap_id = request.form.get('kitap_id')
 
-            if not kitap_id:  # Kitap seçilmemişse
+            if not kitap_id:
                 flash("Lütfen bir kitap seçin.", "warning")
                 return redirect(url_for('odunc'))
 
@@ -235,7 +227,7 @@ def odunc():
         elif 'teslim' in request.form:
             odunc_id = request.form.get('odunc_id')
 
-            if not odunc_id:  # İade için kitap seçilmemişse
+            if not odunc_id:
                 flash("Lütfen iade edilecek kitabı seçin.", "warning")
                 return redirect(url_for('odunc'))
 
@@ -250,120 +242,104 @@ def odunc():
     return render_template("odunc.html", kitaplar=kitaplar, oduncler=oduncler)
 
 
-
-# --- Profil yükleme ayarları 
+# ------------------ Profil Ayarları ------------------
 PROFILE_UPLOAD_FOLDER = os.path.join('static', 'profil_fotograflari')
 os.makedirs(PROFILE_UPLOAD_FOLDER, exist_ok=True)
-
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-
 app.config['PROFILE_UPLOAD_FOLDER'] = PROFILE_UPLOAD_FOLDER
 
-
 def allowed_profile_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
 @app.route('/hesabim', methods=["GET", "POST"])
 @login_required
 def hesabim():
     cursor = get_cursor()
+    db = get_db()
 
-    # Kullanıcı bilgilerini getir
     cursor.execute("SELECT * FROM kullanicilar WHERE id = %s", (session['user_id'],))
     user = cursor.fetchone()
 
     if request.method == "POST":
 
-        # ------------------ PROFİL FOTOĞRAFI YÜKLEME ------------------
-        if 'profil_resmi' in request.files and request.form.get('guncelle'):
-            dosya = request.files['profil_resmi']
+        # ---- Bilgileri güncelleme (ad, soyad, email, profil resmi) ----
+        if 'guncelle' in request.form:
+            ad = request.form.get('ad', user['ad'])
+            soyad = request.form.get('soyad', user['soyad'])
+            email = request.form.get('email', user['email'])
+
+            # 1) Profil resmi kaldırma
+            if request.form.get('resim_kaldir'):
+                if user['profil_resmi']:
+                    eski_yol = os.path.join(app.config['PROFILE_UPLOAD_FOLDER'], user['profil_resmi'])
+                    if os.path.exists(eski_yol):
+                        os.remove(eski_yol)
+                cursor.execute("UPDATE kullanicilar SET profil_resmi=NULL WHERE id=%s", (session['user_id'],))
+                session['profil_resmi'] = None
+                flash("Profil fotoğrafı kaldırıldı.", "success")
+
+            # 2) Yeni profil resmi yükleme
+            dosya = request.files.get('profil_resmi')
             if dosya and dosya.filename and allowed_profile_file(dosya.filename):
                 _, ext = os.path.splitext(secure_filename(dosya.filename))
                 yeni_dosya = f"{uuid.uuid4().hex}{ext.lower()}"
                 hedef_yol = os.path.join(app.config['PROFILE_UPLOAD_FOLDER'], yeni_dosya)
                 dosya.save(hedef_yol)
 
-                # Eski resmi sil
+                # eski resmi sil
                 if user['profil_resmi']:
                     eski_yol = os.path.join(app.config['PROFILE_UPLOAD_FOLDER'], user['profil_resmi'])
                     if os.path.exists(eski_yol):
-                        try:
-                            os.remove(eski_yol)
-                        except OSError:
-                            pass
+                        os.remove(eski_yol)
 
                 cursor.execute("UPDATE kullanicilar SET profil_resmi=%s WHERE id=%s",
                                (yeni_dosya, session['user_id']))
-                db.commit()
                 session['profil_resmi'] = yeni_dosya
                 flash("Profil fotoğrafı güncellendi.", "success")
 
-        # ------------------ FOTOĞRAF KALDIRMA ------------------
-        if 'resim_kaldir' in request.form:
-            if user['profil_resmi']:
-                eski_yol = os.path.join(app.config['PROFILE_UPLOAD_FOLDER'], user['profil_resmi'])
-                if os.path.exists(eski_yol):
-                    try:
-                        os.remove(eski_yol)
-                    except OSError:
-                        pass
-            cursor.execute("UPDATE kullanicilar SET profil_resmi=NULL WHERE id=%s", (session['user_id'],))
+            # 3) Ad, soyad, email güncelleme
+            cursor.execute("UPDATE kullanicilar SET ad=%s, soyad=%s, email=%s WHERE id=%s",
+                           (ad, soyad, email, session['user_id']))
             db.commit()
-            session['profil_resmi'] = None
-            flash("Profil fotoğrafı kaldırıldı.", "info")
+            flash("Bilgiler başarıyla güncellendi.", "success")
 
-        # ------------------ BİLGİ GÜNCELLEME ------------------
-        if 'guncelle' in request.form:
-            ad = request.form.get('ad')
-            soyad = request.form.get('soyad')
-            email = request.form.get('email')
-            if ad and soyad and email:
-                cursor.execute("UPDATE kullanicilar SET ad=%s, soyad=%s, email=%s WHERE id=%s",
-                               (ad, soyad, email, session['user_id']))
+        # ---- Şifre değiştir ----
+        elif 'sifre' in request.form:
+            mevcut_sifre = request.form.get('mevcut_sifre')
+            yeni_sifre = request.form.get('yeni_sifre')
+
+            if mevcut_sifre and yeni_sifre and check_password_hash(user['sifre'], mevcut_sifre):
+                cursor.execute("UPDATE kullanicilar SET sifre=%s WHERE id=%s",
+                               (generate_password_hash(yeni_sifre), session['user_id']))
                 db.commit()
-                flash("Bilgiler güncellendi.", "success")
-            else:
-                flash("Ad, soyad ve email boş olamaz.", "warning")
-
-        # ------------------ ŞİFRE DEĞİŞTİRME ------------------
-        if 'sifre' in request.form:
-            mevcut = request.form.get('mevcut_sifre')
-            yeni = request.form.get('yeni_sifre')
-
-            cursor.execute("SELECT sifre FROM kullanicilar WHERE id=%s", (session['user_id'],))
-            satir = cursor.fetchone()
-
-            if satir and check_password_hash(satir['sifre'], mevcut):
-                yeni_hash = generate_password_hash(yeni)
-                cursor.execute("UPDATE kullanicilar SET sifre=%s WHERE id=%s", (yeni_hash, session['user_id']))
-                db.commit()
-                flash("Şifre başarıyla değiştirildi.", "info")
+                flash("Şifre başarıyla güncellendi.", "success")
             else:
                 flash("Mevcut şifre yanlış!", "danger")
 
-        # ------------------ HESAP SİLME ------------------
-        if 'sil' in request.form:
-            if user['profil_resmi']:
-                eski_yol = os.path.join(app.config['PROFILE_UPLOAD_FOLDER'], user['profil_resmi'])
-                if os.path.exists(eski_yol):
-                    try:
-                        os.remove(eski_yol)
-                    except OSError:
-                        pass
-            cursor.execute("DELETE FROM kullanicilar WHERE id=%s", (session['user_id'],))
-            db.commit()
-            session.clear()
-            flash("Hesap silindi.", "danger")
-            return redirect(url_for('index'))
+        # ---- Hesap sil ----
+        elif 'sil' in request.form:
+            # Önce ödünç kitap var mı kontrol et
+            cursor.execute("SELECT COUNT(*) as sayi FROM odunc WHERE kullanici_id=%s AND teslim_edildi=0", 
+                           (session['user_id'],))
+            odunc = cursor.fetchone()
 
-        #  Kullanıcıyı tekrar çek (güncel hali)
+            if odunc and odunc['sayi'] > 0:
+                flash("Ödünç alınan kitap/kitaplar iade edilmeden hesap silinemez!", "danger")
+            else:
+                # profil resmini sil
+                if user['profil_resmi']:
+                    eski_yol = os.path.join(app.config['PROFILE_UPLOAD_FOLDER'], user['profil_resmi'])
+                    if os.path.exists(eski_yol):
+                        os.remove(eski_yol)
+
+                cursor.execute("DELETE FROM kullanicilar WHERE id=%s", (session['user_id'],))
+                db.commit()
+                session.clear()
+                flash("Hesabınız silindi.", "info")
+                return redirect(url_for('index'))
+
+        # Kullanıcıyı yeniden çekelim
         cursor.execute("SELECT * FROM kullanicilar WHERE id = %s", (session['user_id'],))
         user = cursor.fetchone()
-
-    # Varsayılan fotoğraf kontrolü
-    if not user['profil_resmi']:
-        user['profil_resmi'] = None
 
     return render_template("hesabim.html", user=user)
 

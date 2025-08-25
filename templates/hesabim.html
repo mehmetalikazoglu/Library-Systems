@@ -33,20 +33,19 @@
             {% endif %}
         </div>
         
-
-        <!-- Ad ve Email -->
+        <!-- Ad, Soyad, Email -->
         <div class="col-md-8">
             <div class="mb-3">
                 <label for="ad" class="form-label">Adınız</label>
-                <input type="text" name="ad" value="{{ user.ad }}" class="form-control" id="ad" required>
+                <input type="text" name="ad" value="{{ user.ad }}" class="form-control" id="ad">
             </div>
             <div class="mb-3">
                 <label for="soyad" class="form-label">Soyadınız</label>
-                <input type="text" name="soyad" value="{{ user.soyad }}" class="form-control" id="soyad" required>
+                <input type="text" name="soyad" value="{{ user.soyad }}" class="form-control" id="soyad">
             </div>
             <div class="mb-3">
                 <label for="email" class="form-label">E-posta</label>
-                <input type="email" name="email" value="{{ user.email }}" class="form-control" id="email" required>
+                <input type="email" name="email" value="{{ user.email }}" class="form-control" id="email">
             </div>
 
             <button type="submit" name="guncelle" class="btn btn-primary w-100">Bilgileri Güncelle</button>
@@ -72,8 +71,6 @@
             Hesabı Sil 
         </button> 
     </form>
-                   
-    <br>
 </div>
 
 {% endblock %}
