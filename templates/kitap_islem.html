@@ -3,7 +3,7 @@
 
 <!-- Sayfa başlığı -->
 <div class="mb-4 text-center">
-  <h2 class="fw-bold">Kütüphane Kitap İşlemleri</h2>
+  <h2 class="fw-bold"> Kitap İşlemleri</h2>
   <p class="text-muted">Kitap ekleyin, silin veya bilgilerini güncelleyin</p>
 </div>
 
@@ -25,6 +25,10 @@
       <div class="col-md-2">
         <label for="baski_yili" class="form-label">Baskı Yılı</label>
         <input type="number" id="baski_yili" name="baski_yili" placeholder="YYYY" min="1000" max="2100" class="form-control" required>
+      </div>
+      <div class="col-md-4">
+        <label for="kitap_ozet" class="form-label">Kitap Özeti (opsiyonel)</label>
+        <textarea id="kitap_ozet" name="kitap_ozet" class="form-control" rows="2" placeholder="Kitap özeti yazabilirsiniz..."></textarea>
       </div>
       <div class="col-md-3">
         <label for="resim" class="form-label">Kitap Resmi (opsiyonel)</label>
@@ -77,16 +81,20 @@
         </select>
       </div>
       <div class="col-md-3">
-        <label for="yeni_ad" class="form-label">Yeni Ad</label>
-        <input type="text" id="yeni_ad" name="yeni_ad" placeholder="Yeni Ad" class="form-control" required>
+        <label for="yeni_ad" class="form-label">Yeni Ad </label>
+        <input type="text" id="yeni_ad" name="yeni_ad" placeholder="Yeni Ad" class="form-control">
       </div>
       <div class="col-md-2">
-        <label for="yeni_yazar" class="form-label">Yeni Yazar</label>
-        <input type="text" id="yeni_yazar" name="yeni_yazar" placeholder="Yeni Yazar" class="form-control" required>
+        <label for="yeni_yazar" class="form-label">Yeni Yazar </label>
+        <input type="text" id="yeni_yazar" name="yeni_yazar" placeholder="Yeni Yazar" class="form-control">
       </div>
       <div class="col-md-2">
-        <label for="yeni_yil" class="form-label">Yeni Baskı Yılı</label>
-        <input type="number" id="yeni_yil" name="yeni_yil" placeholder="YYYY" min="1000" max="2100" class="form-control" required>
+        <label for="yeni_yil" class="form-label">Yeni Baskı Yılı </label>
+        <input type="number" id="yeni_yil" name="yeni_yil" placeholder="YYYY" min="1000" max="2100" class="form-control">
+      </div>
+      <div class="col-md-4">
+        <label for="yeni_ozet" class="form-label">Yeni Kitap Özeti (opsiyonel)</label>
+        <textarea id="yeni_ozet" name="yeni_ozet" class="form-control" rows="2" placeholder="Kitap özetini güncelleyebilirsiniz..."></textarea>
       </div>
       <div class="col-md-6">
         <label for="yeni_resim" class="form-label">Yeni Kitap Resmi (opsiyonel)</label>
@@ -99,18 +107,25 @@
   </div>
 </div>
 
-<!-- Kitap Listesi Modern Card Tasarımı -->
+<!-- Kitap Listesi -->
 <h4 class="mb-3">Mevcut Kitaplar</h4>
 <div class="row row-cols-1 row-cols-md-3 g-4">
   {% for kitap in kitaplar %}
   <div class="col">
-    <div class="card h-100 shadow-sm">
+    <div class="card h-100 shadow-sm toggle-card" onclick="toggleSummary({{ kitap.id }})" style="cursor:pointer;">
       <img src="{{ url_for('static', filename='resimler/' ~ (kitap.resim if kitap.resim else 'default.jpeg')) }}" 
            class="card-img-top object-fit-cover" alt="Kitap Resmi" style="height: 280px; border-bottom: 1px solid #ddd;">
       <div class="card-body d-flex flex-column">
         <h5 class="card-title fw-bold">{{ kitap.ad }}</h5>
         <p class="card-text text-muted mb-1">{{ kitap.yazar }}</p>
         <p class="card-text"><small class="text-muted">Baskı Yılı: {{ kitap.baski_yili }}</small></p>
+
+        <!-- Açılır Özet -->
+        <div id="summary-{{ kitap.id }}" class="summary-panel">
+          <p class="mt-3"><strong>Kitap Özeti:</strong></p>
+          <p>{{ kitap.kitap_ozet if kitap.kitap_ozet else "Kitap özeti bulunmamaktadır." }}</p>
+        </div>
+
         <div class="mt-auto">
           {% if kitap.mevcut %}
             <span class="badge bg-success">Mevcut</span>
@@ -124,35 +139,29 @@
   {% endfor %}
 </div>
 
-<!-- Select2 ve jQuery -->
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
-<script>
-  $(document).ready(function() {
-    $('.select2').select2({
-      placeholder: "Lütfen seçim yapınız...",
-      width: '100%',
-      allowClear: true
-    });
-  });
-</script>
-
 <style>
-  /* Daha modern ve yumuşak görünümler için küçük eklemeler */
-  .form-label {
-    font-weight: 600;
+  .summary-panel {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s ease;
   }
-  .card {
-    border-radius: 12px;
-  }
-  .card-img-top {
-    border-top-left-radius: 12px;
-    border-top-right-radius: 12px;
-    object-fit: cover;
+
+  .summary-panel.active {
+    max-height: 500px;
   }
 </style>
 
-{% endblock %} 
+<script>
+function toggleSummary(id) {
+  const panel = document.getElementById("summary-" + id);
+  if(panel.classList.contains("active")){
+    panel.classList.remove("active");
+    panel.style.maxHeight = null;
+  } else {
+    panel.classList.add("active");
+    panel.style.maxHeight = panel.scrollHeight + "px";
+  }
+}
+</script>
 
+{% endblock %}

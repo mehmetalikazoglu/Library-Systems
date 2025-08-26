@@ -3,13 +3,13 @@
 
 <div class="container py-5">
   <div class="text-center mb-4 welcome-text">
-    <h2 class="fw-bold">📚 Kütüphane Sistemine Hoş Geldiniz</h2>
+    <h2 class="fw-bold">📚Kitabı Âlem’e adım atın, her kitapta bir âlem keşfedin.</h2>
     <p class="text-muted">Kütüphanemizdeki kitapları aşağıda liste halinde görebilirsiniz.</p>
   </div>
 
   {% for kitap in kitaplar %}
   <div class="card mb-4 shadow-sm border-0 kitap-card hidden" style="animation-delay: {{ loop.index0 * 0.15 }}s;">
-    <div class="row g-0 align-items-center">
+    <div class="row g-0 align-items-center toggle-card" onclick="toggleSummary({{ kitap.id }})">
       <div class="col-md-2 text-center p-2">
         <img src="{{ url_for('static', filename='resimler/' ~ (kitap.resim if kitap.resim else 'default.jpeg')) }}"
              class="img-fluid rounded"
@@ -31,6 +31,14 @@
         {% else %}
           <span class="badge bg-danger px-3 py-2 mt-3">Ödünçte</span>
         {% endif %}
+      </div>
+    </div>
+
+    <!-- Kitap Özeti (Açılır Alan) -->
+    <div id="summary-{{ kitap.id }}" class="summary-panel">
+      <div class="p-3">
+        <p class="mt-3"><strong>Kitap Özeti:</strong></p>
+        <p>{{ kitap.kitap_ozet if kitap.kitap_ozet else "Kitap özeti bulunmamakta." }}</p>
       </div>
     </div>
   </div>
@@ -56,11 +64,12 @@
     }
   }
 
-  /* Kitap kartları için fade + scale animasyonu */
+  /* Kart animasyonu */
   .kitap-card {
     opacity: 0;
     transform: translateY(40px) scale(0.95);
     transition: all 0.6s ease-out;
+    cursor: pointer;
   }
 
   .kitap-card.show {
@@ -68,12 +77,10 @@
     transform: translateY(0) scale(1);
   }
 
-  /* Başlangıçta gizle */
   .hidden {
     opacity: 0;
   }
 
-  /* Diğer stiller */
   .card-title {
     font-size: 1.2rem;
     font-weight: 600;
@@ -88,9 +95,20 @@
     font-size: 0.9rem;
     border-radius: 1rem;
   }
+
+  /* Açılır kitap özeti paneli */
+  .summary-panel {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.6s ease;
+    border-top: 1px solid #eee;
+  }
+
+  .summary-panel.active {
+    max-height: 500px; /* içerik kadar açılacak */
+  }
 </style>
 
-<!-- Scroll ile görünce animasyon -->
 <script>
 document.addEventListener("DOMContentLoaded", function() {
   const cards = document.querySelectorAll(".kitap-card");
@@ -99,7 +117,7 @@ document.addEventListener("DOMContentLoaded", function() {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         entry.target.classList.add("show");
-        observer.unobserve(entry.target); // Tekrar animasyon yapmaması için
+        observer.unobserve(entry.target);
       }
     });
   }, { threshold: 0.2 });
@@ -108,6 +126,17 @@ document.addEventListener("DOMContentLoaded", function() {
     observer.observe(card);
   });
 });
+
+function toggleSummary(id) {
+  const panel = document.getElementById("summary-" + id);
+  if (panel.classList.contains("active")) {
+    panel.classList.remove("active");
+    panel.style.maxHeight = null;
+  } else {
+    panel.classList.add("active");
+    panel.style.maxHeight = panel.scrollHeight + "px";
+  }
+}
 </script>
 
 {% endblock %}

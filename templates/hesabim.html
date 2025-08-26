@@ -7,31 +7,32 @@
     <form method="POST" enctype="multipart/form-data" class="row g-3 shadow-sm p-4 rounded bg-light">
 
         <!-- Profil Fotoğrafı -->
-        <div class="col-md-4 text-center">
-            {% if session.get('profil_resmi') %}
-                <img src="{{ url_for('static', filename='profil_fotograflari/' ~ session.get('profil_resmi')) }}"
-                     alt="Profil" class="img-thumbnail rounded-circle mb-2"
-                     style="width: 150px; height: 150px; object-fit: cover;">
-            {% else %}
-                <img src="{{ url_for('static', filename='defaultprofil.jpg') }}"
-                     alt="Profil" class="img-thumbnail rounded-circle mb-2"
-                     style="width: 150px; height: 150px; object-fit: cover;">
-            {% endif %}
+<div class="col-md-4 text-center">
+    {% if user.profil_resmi %}
+        <img src="{{ url_for('static', filename='profil_fotograflari/' ~ user.profil_resmi) }}"
+             alt="Profil" class="img-thumbnail rounded-circle mb-2"
+             style="width: 150px; height: 150px; object-fit: cover;">
+    {% else %}
+        <img src="{{ url_for('static', filename='defaultprofil.jpg') }}"
+             alt="Profil" class="img-thumbnail rounded-circle mb-2"
+             style="width: 150px; height: 150px; object-fit: cover;">
+    {% endif %}
 
-            <div class="form-group mt-2">
-                <label for="profil_resmi" class="form-label">Yeni Profil Fotoğrafı</label>
-                <input type="file" name="profil_resmi" id="profil_resmi" class="form-control" accept="image/*">
-            </div>
+    <div class="form-group mt-2">
+        <label for="profil_resmi" class="form-label">Yeni Profil Fotoğrafı</label>
+        <input type="file" name="profil_resmi" id="profil_resmi" class="form-control" accept="image/*">
+    </div>
 
-            {% if session.get('profil_resmi') %}
-            <div class="form-check mt-2">
-                <input class="form-check-input" type="checkbox" name="resim_kaldir" id="resim_kaldir" value="true">
-                <label class="form-check-label" for="resim_kaldir">
-                    Mevcut fotoğrafı kaldır
-                </label>
-            </div>
-            {% endif %}
-        </div>
+    {% if user.profil_resmi %}
+    <div class="form-check mt-2">
+        <input class="form-check-input" type="checkbox" name="resim_kaldir" id="resim_kaldir" value="true">
+        <label class="form-check-label" for="resim_kaldir">
+            Mevcut fotoğrafı kaldır
+        </label>
+    </div>
+    {% endif %}
+</div>
+
         
         <!-- Ad, Soyad, Email -->
         <div class="col-md-8">
