@@ -69,6 +69,7 @@ def load_logged_in_user():
         cursor.execute("SELECT * FROM kullanicilar WHERE id=%s", (session['user_id'],))
         g.user = cursor.fetchone()
 
+# Tüm html sayfalarına user bilgisini aktarma
 @app.context_processor
 def inject_user():
     return dict(user=g.user)

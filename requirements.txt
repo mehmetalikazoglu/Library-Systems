@@ -1,0 +1,7 @@
+import os
+Flask
+gunicorn
+mysql-connector-python
+flask-login
+werkzeug
+wrap
